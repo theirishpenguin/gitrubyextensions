@@ -1,0 +1,2 @@
+git-extdiff is a ruby script which directory compares 2 commits or branches.
+It's currently usable but work in progress.

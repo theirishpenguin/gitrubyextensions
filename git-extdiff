@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+
+# INSTALLATION:
+# Copy file to an appropriate directory in your path and make executable
+
+# USAGE:
+# git-extdiff revision1 revision2
+# git-extdiff branch1 branch2
+
+require 'tmpdir'
+require 'fileutils'
+
+extdiff_tool = 'meld'
+# TODO: Add a GUID of some sort to make each path globally unique
+prefix = "#{Dir.tmpdir}/.git-extdiff-tmp-"
+
+revision1 =  ARGV[0] # hardcode something like 'somebody/master' for testing
+revision2 =  ARGV[1] # hardcode something like 'another/master' for testing
+
+# Note: We clean illegal path characters below
+# TODO: More cleaning
+
+dest1 = "#{prefix}#{revision1.gsub('/', '_')}"
+dest2 = "#{prefix}#{revision2.gsub('/', '_')}"
+
+# Copy our source git repo twice to temp directory
+FileUtils.cp_r('.', dest1)
+FileUtils.cp_r('.', dest2)
+
+# Make 1 copy reflect the first revision
+FileUtils.cd(dest1)
+system "git checkout #{revision1}"
+
+# Make 1 copy reflect the other revision
+FileUtils.cd(dest2)
+system "git checkout #{revision2}"
+
+# Call the diff tool
+system "#{extdiff_tool} #{dest1} #{dest2}"
+
+# Cleanup like the good little coder that you are
+FileUtils.remove_entry_secure(dest1, true)
+FileUtils.remove_entry_secure(dest2, true)
+
+
+
+# TODO: Test cases
+# ================
+# Unit test with
+#  - '424459fbc0e6da0d78c2e03d7adff53fa84959d0' vs 'fc2c5089d6e238c3b9f8066d03e3e2add1beaa59'
+#  - 'somebody/master' vs 'anotherperson/master'
+#  - 'somebody/master' vs 'master'
+
+# WISHLIST
+# ========
+# Can this be made work on Windows if we are careful with path separator
+# How do we configure this to work with any tool kdiff3, etc
+# If only 1 revision specified then use only create 1 dest directory and use
+# the real working directory as the left side of the comparision (allows us
+# pull changes from the right hand side)
+# Autocomplete branch names
+
+# ISSUES
+# ======
+# I'm sure there is many :-)
+# Any files that were not tracked get copied to the diff'ed directories,
+# but they will show up as the same in both trees and not as a difference.
